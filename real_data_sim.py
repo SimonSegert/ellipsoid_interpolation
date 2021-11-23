@@ -7,7 +7,7 @@ import pickle as pkl
 max_iter=10**5
 eps=10**-4
 
-max_dim=400
+max_dim=200
 min_dim=10
 
 save_dir='results/mnist_cifar' #or None
@@ -40,12 +40,16 @@ for ds_name in ['mnist','cifar10']:
     #n_ch(d-2*crop)^2=ndims
     #2crop=d-(ndims/nch)**.5
 
-    min_crop=int((d-(max_dim/n_ch)**.5)/2)
+    #min_crop=int((d-(max_dim/n_ch)**.5)/2)
 
-    max_crop=int((d-(min_dim/n_ch)**.5)/2)
+    #max_crop=int((d-(min_dim/n_ch)**.5)/2)
+    max_crop=d-2
+    min_crop=2
     for cropx in range(max_crop,min_crop,-1):
         for cropy in range(max_crop,min_crop,-1):
             X_tr,X_test=get_cropped_ds(ds,ds_test,cropx,cropy,ds_name)
+            if X_tr.shape[1]>max_dim or X_tr.shape[1]<min_dim:
+                continue
             X=X_tr
             P,c,errs=MinVolEllipse(X,eps,max_iter=max_iter,delta0=0)
             converged=len(errs)<max_iter

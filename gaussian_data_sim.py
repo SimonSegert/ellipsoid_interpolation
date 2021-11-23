@@ -3,19 +3,21 @@ import numpy as np
 from fit import *
 import pickle as pkl
 import os
+import time
 
-d_vals= [5]#np.arange(5,15)
-N_vals=[10]#np.arange(10,200,10)
-n_iters=10#1000
+d_vals= np.arange(3,13)
+N_vals=np.arange(10,200,10)
+n_iters=1000
 
 eps=10**-4
-max_iter=1#10**5
+max_iter=10**5
 
-save_dir='results/test0' #or None
+save_dir='results/gaussian' #or None
 
 res_gaussian=[]
 
-for _ in range(n_iters):
+START=time.time()
+for ii in range(n_iters):
     for d in d_vals:
         for N in N_vals:
             X=np.random.randn(N,d)
@@ -24,6 +26,12 @@ for _ in range(n_iters):
             thresh=np.max(dist_ellipsoid(X,P,c))
             p=np.mean(dist_ellipsoid(Xtest,P,c)<thresh)
             res_gaussian.append([d,N,p])
+    print(f'iter {ii}')
+    n_remaining=n_iters-1-ii
+    time_per_iter=(time.time()-START)/(ii+1)
+    time_remaining=n_remaining*time_per_iter
+    print(f'est time remaining={time_remaining/3600} hr.' )
+
 
 res_gaussian=pd.DataFrame(res_gaussian,columns=['d','N','p'])
 
