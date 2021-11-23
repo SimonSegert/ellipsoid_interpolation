@@ -8,7 +8,6 @@ def MinVolEllipse(P, tolerance,max_iter=100,use_naive=False,delta0=0,verbose=Fal
     #original matlab code assumes that first array dimension is embedding dimension,
     P=P.T
     d, N = P.shape
-    print(d,N)
     Q = np.zeros((d+1,N))
     Q[0:d,:] = P[0:d,0:N]
     Q[d,:] = np.ones((1,N))
