@@ -86,7 +86,7 @@ def dist_ellipsoid(X,P,c):
     Xc=X-c.squeeze()
     return np.einsum('ij,jk,ik->i',Xc,P,Xc,optimize='optimal')
 
-def get_cropped_ds(ds,ds_test,padx,pady,ds_name):
+def get_cropped_ds(ds,ds_test,padx,pady,ds_name,discard_const=False):
     #crop out images as in lecun paper
     if ds_name=='mnist':
         X_tr=ds.data.squeeze()
@@ -105,5 +105,11 @@ def get_cropped_ds(ds,ds_test,padx,pady,ds_name):
         X_test=X_test[:,padx:32-padx,pady:32-pady]
         X_test=X_test.reshape((len(X_test),-1))
 
+    #constant dimensions (e.g. pixels that are always black) cause instability in algorithm
+    #(bc then the points lie on proper subspace)
+    if discard_const:
+        nonconst_dims=np.std(X_tr,axis=0)>10**-5
+        X_tr=X_tr[:,nonconst_dims]
+        X_test=X_test[:,nonconst_dims]
     return X_tr,X_test
 
