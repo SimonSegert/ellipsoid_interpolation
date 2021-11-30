@@ -62,7 +62,6 @@ def MinVolEllipse(P, tolerance,max_iter=100,use_naive=False,delta0=0,verbose=Fal
         step_size = (maximum - d-1 )/((d+1)*(maximum-1));
         new_u = (1 - step_size)*u
         new_u[j] = new_u[j] + step_size;
-        count = count + 1;
         err = np.linalg.norm(new_u - u)
         old_u=u
         u = new_u;
@@ -72,6 +71,7 @@ def MinVolEllipse(P, tolerance,max_iter=100,use_naive=False,delta0=0,verbose=Fal
         if verbose and count%500==0:
             print(f'iter {count}, err={np.mean(errs[-50:])}')
         errs.append(err)
+        count = count + 1;
     if verbose:
         print('time per iteration:')
         print((time.time()-START)/(count-1))
