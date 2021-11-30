@@ -3,14 +3,15 @@ from fit import *
 import torchvision
 import os
 import pickle as pkl
+from itertools import product
 
-max_iter=10**5
-eps=10**-4
+max_iter=10**6#10**6
+eps=10**-2
 
 max_dim=200
 min_dim=10
 
-save_dir='results/mnist_cifar' #or None
+save_dir='results/mnist_cifar2' #or None
 
 res=dict({})
 for ds_name in ['mnist','cifar10']:
@@ -44,26 +45,30 @@ for ds_name in ['mnist','cifar10']:
 
     #max_crop=int((d-(min_dim/n_ch)**.5)/2)
     max_crop=d-2
-    min_crop=2
-    for cropx in range(max_crop,min_crop,-1):
-        for cropy in range(max_crop,min_crop,-1):
-            X_tr,X_test=get_cropped_ds(ds,ds_test,cropx,cropy,ds_name)
-            if X_tr.shape[1]>max_dim or X_tr.shape[1]<min_dim:
-                continue
-            X=X_tr
-            P,c,errs=MinVolEllipse(X,eps,max_iter=max_iter,delta0=0)
-            converged=len(errs)<max_iter
+    min_crop=0
+    for cropx,cropy in product(*[range(max_crop,min_crop,-1)]*2):
+        X_tr,X_test=get_cropped_ds(ds,ds_test,cropx,cropy,ds_name,discard_const=True)
+        if X_tr.shape[1]>max_dim or X_tr.shape[1]<min_dim:
+            continue
+        X=X_tr
+        START=time.time()
+        P,c,errs=MinVolEllipse(X,eps,max_iter=max_iter,delta0=0)
+        elapsed=time.time()-START
+        converged=len(errs)<max_iter
+        tr_dist=dist_ellipsoid(X,P,c)
 
-            tr_dist=dist_ellipsoid(X,P,c)
-
-            test_dist=dist_ellipsoid(X_test,P,c)
-            dists.append(test_dist)
-            tr_dists.append(tr_dist)
-            dims.append(X_tr.shape[1])
-            #due to convergence issues, the fitted ellipse ends up being too small (some train points have
-            #dist slightly larger than 1)
-            #to correct for this, we allow test point
-            print(ds_name,X_tr.shape[-1],np.mean(test_dist<np.max(tr_dist)))
+        test_dist=dist_ellipsoid(X_test,P,c)
+        dists.append(test_dist)
+        tr_dists.append(tr_dist)
+        dims.append(X_tr.shape[1])
+        #due to convergence issues, the fitted ellipse ends up being too small (some train points have
+        #dist slightly larger than 1)
+        #to correct for this, we allow test point
+        weak_cutoff=1 if np.max(tr_dist)<=1 else np.max(tr_dist)
+        print(f'{ds_name},ndims={X_tr.shape[-1]},time={elapsed} s')
+        print(f'tr data in ellipse={np.mean(tr_dist<1)},weak cutoff={weak_cutoff},n iters={len(errs)}')
+        print(f'test data in ellipse={np.mean(test_dist < 1)}, test data in weak ellipse={np.mean(test_dist < weak_cutoff)}')
+        print('')
     dists=np.array(dists)
     tr_dists=np.array(tr_dists)
     dims=np.array(dims)
