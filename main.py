@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-data_dir='results/mnist_cifar'
+data_dir='results/mnist_cifar2'
 with open(data_dir+'/values.pkl','rb') as f:
     r,h=pkl.load(f)
 
@@ -11,9 +11,9 @@ res=[]
 for ds_name in r.keys():
     dists,tr_dists,dims=r[ds_name]
     interp_probs=np.mean(dists<1,axis=1)
-    for d,p in zip(dims,interp_probs):
-        res.append([d,p,ds_name])
-res=pd.DataFrame(res,columns=['dimension considered','interp prob','name'])
+    for ii,(d,p) in enumerate(zip(dims,interp_probs)):
+        res.append([d,p,ds_name,np.mean(tr_dists[ii]<1)])
+res=pd.DataFrame(res,columns=['dimension considered','interp prob','name','train interp prob'])
 res=res.groupby(['dimension considered','name']).mean().reset_index()
 
 for i,ds_name in enumerate(r.keys()):
