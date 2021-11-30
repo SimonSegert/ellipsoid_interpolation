@@ -6,14 +6,14 @@ import os
 import time
 
 d_vals= np.arange(2,13)
-N_vals=np.arange(10,102,2)
-n_iters=200
-test_pts_per_iter=100
+N_vals=np.arange(10,82,2)
+n_iters=50
+test_pts_per_iter=500
 
-eps=10**-4
+eps=10**-3
 max_iter=10**5
 
-save_dir='results/gaussian2' #or None
+save_dir='results/gaussian3' #or None
 
 res_gaussian=[]
 
@@ -21,8 +21,8 @@ START=time.time()
 for ii in range(n_iters):
     for d in d_vals:
         for N in N_vals:
-            if N<d:
-                #the data lie in a proper subspace, so the minimal ellipse is degenerate
+            if N<d+1:
+                #the data lie in a proper affine subspace, so the minimal ellipse is degenerate
                 continue
             X=np.random.randn(N,d)
             Xtest=np.random.randn(test_pts_per_iter,d)
