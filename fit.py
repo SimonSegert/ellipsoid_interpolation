@@ -37,7 +37,8 @@ def MinVolEllipse(Pt, tolerance,max_iter=100,use_naive=False,delta0=0,verbose=Fa
             #equivalent to M = np.diag(np.linalg.multi_dot((Q.T,np.linalg.inv(X), Q))),
 
             #this matrix is maintained so that the partial quadratic forms can be quickly computed
-            PuPt_inv=np.linalg.inv(P@np.diag(u.squeeze())@P.T)
+            #PuPt_inv=np.linalg.inv(P@np.diag(u.squeeze())@P.T)
+            PuPt_inv=np.linalg.inv(np.einsum('ji,i,ki->jk',P,u.squeeze(),P,optimize='optimal'))
             #PuPt'=aPuPt+bP_jP_j^t
             #PuPt_inv'=a^{-1}inv(PuPt+(b/a)P_jP_j^t)
 
@@ -124,3 +125,40 @@ def get_cropped_ds(ds,ds_test,padx,pady,ds_name,discard_const=False):
         X_test=X_test[:,nonconst_dims]
     return X_tr,X_test
 
+
+def ellipse_proj(x, P, n_iters=10):
+    # projects to solid ellipse
+
+
+    #if x is inside the ellipse, it is equal to its projection
+    if np.sum(np.dot(P,x)*x)<1:
+        return x
+
+    #now,x is outside ellipse
+    #thus (1+0* P)^{-1}x=x lies outside ellipse
+    #first step is to find lambda such that (1+lambda* P)^{-1}x lies in interior
+
+    #bounds for lambda
+    lb = 0
+    ub = .5
+    while True:
+        ub*=2
+        A = np.eye(len(P)) + ub * P
+        xp = np.linalg.solve(A, x)
+        d = np.sum(xp * np.dot(P, xp))
+        if d<1:
+            break
+    #use binary search to find lambda for which (1+lambda* P)^{-1}x lies on surface
+    for _ in range(n_iters):
+        mp = (lb + ub) / 2
+        A = np.eye(len(P)) + mp * P
+        xp = np.linalg.solve(A, x)
+        d = np.sum(xp * np.dot(P, xp))
+        if d > 1:  # want to decrease d, so increase lambda
+            lb = mp
+        else:
+            ub = mp
+    mp = (lb + ub) / 2
+    A = np.linalg.inv(np.eye(len(P)) + mp * P)
+    xp = np.dot(A, x)
+    return xp
